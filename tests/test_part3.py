@@ -38,6 +38,26 @@ class Part3Tests(unittest.TestCase):
         self.assertTrue(valid)
         self.assertEqual(normalized["risksAndMitigations"], ["Risk: Low-quality data Mitigation: Validate input"])
 
+    def test_blueprint_normalizes_a_structured_database_design(self):
+        blueprint = dict(BLUEPRINT, databaseDesign={
+            "engine": "PostgreSQL",
+            "tables": [
+                {"name": "users", "columns": ["id UUID", "email text"]},
+                {"name": "resumes", "columns": ["id UUID", "user_id UUID"]},
+            ],
+            "relationships": ["users.id -> resumes.user_id"],
+        })
+        valid, normalized = validate_blueprint_response(blueprint)
+        self.assertTrue(valid)
+        self.assertIn("PostgreSQL", normalized["databaseDesign"])
+        self.assertIn("users", normalized["databaseDesign"])
+        self.assertIn("resumes", normalized["databaseDesign"])
+
+    def test_blueprint_rejects_an_empty_structured_database_design(self):
+        valid, message = validate_blueprint_response(dict(BLUEPRINT, databaseDesign={}))
+        self.assertFalse(valid)
+        self.assertEqual(message, "Invalid databaseDesign response.")
+
     @patch('backend.evaluation.get_api_key', return_value='test-key')
     @patch('backend.evaluation.call_gemini_json', return_value=EVALUATION)
     def test_evaluation_uses_shared_transport(self, mocked_call, _):

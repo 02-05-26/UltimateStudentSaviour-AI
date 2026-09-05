@@ -75,6 +75,22 @@ globalThis.fetch = async (_url, init) => {
 try {
   assert.equal(config.path, '/api/*', 'The function must preserve the existing /api/* URLs.');
 
+  const structuredDatabaseBlueprint = {
+    ...blueprint,
+    databaseDesign: {
+      engine: 'PostgreSQL',
+      tables: [
+        { name: 'users', columns: ['id UUID', 'email text'] },
+        { name: 'resumes', columns: ['id UUID', 'user_id UUID'] },
+      ],
+      relationships: ['users.id -> resumes.user_id'],
+    },
+  };
+  const normalizedBlueprint = __testables.validateBlueprint(structuredDatabaseBlueprint);
+  assert.match(normalizedBlueprint.databaseDesign, /PostgreSQL/);
+  assert.match(normalizedBlueprint.databaseDesign, /resumes/);
+  assert.throws(() => __testables.validateBlueprint({ ...blueprint, databaseDesign: {} }), /Invalid databaseDesign response/);
+
   let result = await invoke('/api/health', { method: 'GET' });
   assert.equal(result.response.status, 200);
   assert.equal(result.body.status, 'healthy');

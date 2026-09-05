@@ -178,12 +178,28 @@ function validateEvaluation(data) {
 
 const BLUEPRINT_TEXT_FIELDS = ['projectSummary', 'problemDefinition', 'proposedSolution', 'targetUsers', 'systemArchitecture', 'databaseDesign', 'apiPlan', 'aiIntegrationPlan', 'testingStrategy', 'deploymentPlan', 'securityConsiderations', 'futureScope'];
 const BLUEPRINT_LIST_FIELDS = ['functionalRequirements', 'nonFunctionalRequirements', 'mvpFeatures', 'optionalFeatures', 'recommendedTechStack', 'developmentPhases', 'risksAndMitigations'];
+function structuredDatabaseDesign(value, depth = 0) {
+  if (depth > 5) return null;
+  if (typeof value === 'string') return value.trim() || null;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (Array.isArray(value)) {
+    if (!value.length) return null;
+    const values = value.map(item => structuredDatabaseDesign(item, depth + 1));
+    return values.some(item => item === null) ? null : values.join(', ');
+  }
+  if (!value || typeof value !== 'object') return null;
+  const pairs = Object.entries(value).map(([label, item]) => [label.trim(), structuredDatabaseDesign(item, depth + 1)]);
+  if (!pairs.length || pairs.some(([label, item]) => !label || item === null)) return null;
+  const formatted = pairs.map(([label, item]) => `${label}: ${item}`).join('; ');
+  return formatted.length <= 10_000 ? formatted : null;
+}
 function validateBlueprint(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new ApiError(422, 'Invalid blueprint response.');
   const output = {};
   for (const field of BLUEPRINT_TEXT_FIELDS) {
     let value = data[field];
     if (field === 'targetUsers' && Array.isArray(value)) value = value.join(', ');
+    if (field === 'databaseDesign' && typeof value !== 'string') value = structuredDatabaseDesign(value);
     if (!nonEmptyText(value)) throw new ApiError(422, `Invalid ${field} response.`);
     output[field] = value.trim();
   }
@@ -298,7 +314,7 @@ async function evaluate(profile, project) {
   return validateEvaluation(response);
 }
 async function blueprint(profile, project) {
-  const response = await callGeminiJson('You are a senior software architect. Return ONLY JSON containing projectSummary, problemDefinition, proposedSolution, targetUsers, functionalRequirements, nonFunctionalRequirements, mvpFeatures, optionalFeatures, recommendedTechStack, systemArchitecture, databaseDesign, apiPlan, aiIntegrationPlan, developmentPhases, testingStrategy, deploymentPlan, securityConsiderations, risksAndMitigations, futureScope. Keep scope practical for a final-year student.', JSON.stringify({ profile, project }));
+  const response = await callGeminiJson('You are a senior software architect. Return ONLY JSON containing projectSummary, problemDefinition, proposedSolution, targetUsers, functionalRequirements, nonFunctionalRequirements, mvpFeatures, optionalFeatures, recommendedTechStack, systemArchitecture, databaseDesign, apiPlan, aiIntegrationPlan, developmentPhases, testingStrategy, deploymentPlan, securityConsiderations, risksAndMitigations, futureScope. databaseDesign must be a non-empty plain-text description; describe tables, key fields, and relationships in prose. Keep scope practical for a final-year student.', JSON.stringify({ profile, project }));
   return validateBlueprint(response);
 }
 async function improve(profile, project, concern) {

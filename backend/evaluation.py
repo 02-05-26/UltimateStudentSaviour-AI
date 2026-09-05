@@ -31,7 +31,7 @@ def evaluate_project(profile: Dict[str, Any], project: Dict[str, Any]) -> Dict[s
 
 
 def generate_blueprint(profile: Dict[str, Any], project: Dict[str, Any]) -> Dict[str, Any]:
-    prompt = """You are a senior software architect. Return ONLY JSON containing projectSummary, problemDefinition, proposedSolution, targetUsers, functionalRequirements (array), nonFunctionalRequirements (array), mvpFeatures (array), optionalFeatures (array), recommendedTechStack (array), systemArchitecture, databaseDesign, apiPlan, aiIntegrationPlan, developmentPhases (array), testingStrategy, deploymentPlan, securityConsiderations, risksAndMitigations (array), futureScope. Keep the scope practical for a final-year student."""
+    prompt = """You are a senior software architect. Return ONLY JSON containing projectSummary, problemDefinition, proposedSolution, targetUsers, functionalRequirements (array), nonFunctionalRequirements (array), mvpFeatures (array), optionalFeatures (array), recommendedTechStack (array), systemArchitecture, databaseDesign, apiPlan, aiIntegrationPlan, developmentPhases (array), testingStrategy, deploymentPlan, securityConsiderations, risksAndMitigations (array), futureScope. databaseDesign must be a non-empty plain-text description; describe tables, key fields, and relationships in prose. Keep the scope practical for a final-year student."""
     return _run(prompt, _project_context(profile, project), validate_blueprint_response)
 
 

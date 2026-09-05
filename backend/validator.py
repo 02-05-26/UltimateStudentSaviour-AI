@@ -173,6 +173,40 @@ def _text(value: Any, field: str) -> Tuple[bool, Any]:
     return True, value.strip()
 
 
+def _structured_database_design(value: Any) -> Any:
+    """Render Gemini's structured database plans as safe, readable text."""
+    def format_value(item: Any, depth: int = 0) -> Any:
+        if depth > 5:
+            return None
+        if isinstance(item, str):
+            return item.strip() or None
+        if isinstance(item, (int, float)) and not isinstance(item, bool):
+            return str(item)
+        if isinstance(item, list):
+            if not item:
+                return None
+            values = [format_value(entry, depth + 1) for entry in item]
+            if any(entry is None for entry in values):
+                return None
+            return ", ".join(values)
+        if isinstance(item, dict):
+            if not item:
+                return None
+            pairs = []
+            for label, entry in item.items():
+                if not isinstance(label, str) or not label.strip():
+                    return None
+                formatted = format_value(entry, depth + 1)
+                if formatted is None:
+                    return None
+                pairs.append(f"{label.strip()}: {formatted}")
+            return "; ".join(pairs)
+        return None
+
+    formatted = format_value(value)
+    return formatted if isinstance(formatted, str) and formatted.strip() and len(formatted) <= 10000 else None
+
+
 def validate_evaluation_response(data: Any) -> Tuple[bool, Any]:
     if not isinstance(data, dict): return False, "Invalid evaluation response."
     output = {}
@@ -206,6 +240,11 @@ def validate_blueprint_response(data: Any) -> Tuple[bool, Any]:
             if not raw_value or any(not isinstance(item, str) or not item.strip() for item in raw_value):
                 return False, "Invalid targetUsers response."
             raw_value = ", ".join(item.strip() for item in raw_value)
+        # Gemini may represent a database plan as tables, columns, and
+        # relationships. Keep the content, but normalize it for the existing
+        # text-only Project Details view instead of discarding a valid plan.
+        if key == "databaseDesign" and not isinstance(raw_value, str):
+            raw_value = _structured_database_design(raw_value)
         valid, value = _text(raw_value, key)
         if not valid: return False, value
         output[key] = value
