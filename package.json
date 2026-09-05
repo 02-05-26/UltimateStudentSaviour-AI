@@ -1,0 +1,27 @@
+{
+  "name": "ultimatestudentsaviour-ai",
+  "version": "1.0.0",
+  "description": "From Project Idea to Final Presentation. AI Project Idea Generator & Mentor for Final-Year Projects.",
+  "main": "server.py",
+  "type": "module",
+  "scripts": {
+    "start": "python server.py",
+    "test": "python -m unittest discover tests && node tests/test_frontend.mjs && node tests/test_netlify_api.mjs",
+    "test:frontend": "node tests/test_frontend.mjs",
+    "test:netlify": "node tests/test_netlify_api.mjs",
+    "build": "node scripts/netlify-build.mjs && node --check netlify/functions/api.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.0.3"
+  },
+  "keywords": [
+    "ai",
+    "student-mentor",
+    "final-year-project",
+    "gemini",
+    "project-generator",
+    "ultimatestudentsaviour"
+  ],
+  "author": "UltimateStudentSaviour Team",
+  "license": "MIT"
+}

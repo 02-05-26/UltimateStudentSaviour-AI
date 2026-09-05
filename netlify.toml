@@ -1,0 +1,7 @@
+[build]
+  command = "node scripts/netlify-build.mjs && node --check netlify/functions/api.mjs"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

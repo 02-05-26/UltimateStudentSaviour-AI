@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import { CompareView, DashboardView, MentorUnavailableView, MentorView, ProjectDetailsView, RoadmapView } from '../js/components/Part3Views.js';
+
+const project = { id: 'p_safe', title: '<img src=x onerror=alert(1)>', shortDescription: 'Description', problemStatement: 'Problem', whyItFits: 'Fit', targetUsers: 'Students', domain: 'AI', difficulty: 'Moderate', feasibilityScore: 80, innovationScore: 81, finalYearSuitabilityScore: 82, estimatedScope: '4 months', techStack: ['Python'], keyFeatures: ['MVP'], uniqueValue: 'Value', possibleChallenges: ['Risk'], evaluation: { overallScore: 80, technicalDepthScore: 77, finalYearSuitabilityScore: 82, scopeFitScore: 78 } };
+const operation = { loading: false, error: '' };
+const details = ProjectDetailsView({ project, saved: false, compared: false, operations: { evaluate: operation, blueprint: operation, improve: operation } });
+assert.ok(details.includes('&lt;img src=x onerror=alert(1)&gt;'));
+assert.ok(!details.includes('<img src=x onerror=alert(1)>'));
+assert.ok(details.includes('onclick="window.runBlueprint()"'));
+const blueprintLoading = ProjectDetailsView({ project, saved: false, compared: false, operations: { evaluate: operation, blueprint: { loading: true }, improve: operation } });
+assert.ok(blueprintLoading.includes('Building blueprint…'));
+assert.ok(blueprintLoading.includes('disabled aria-disabled="true"'));
+const blueprintError = ProjectDetailsView({ project, saved: false, compared: false, operations: { evaluate: operation, blueprint: { error: 'Blueprint unavailable' }, improve: operation } });
+assert.ok(blueprintError.includes('Retry blueprint'));
+assert.ok(DashboardView([project]).includes('Delete'));
+assert.ok(CompareView([project, { ...project, id: 'p_two', title: 'Second' }]).includes('Best Overall Choice'));
+assert.ok(RoadmapView([{ name: 'Planning', objective: 'Plan', outcome: 'Ready', tasks: [{ text: 'Task', done: false }] }], 'p_safe').includes('toggleRoadmapTask'));
+const mentor = MentorView({ project, messages: [{ role: 'assistant', content: '<script>alert(1)</script>', nextSteps: ['Plan'] }], operation: {} });
+assert.ok(mentor.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+assert.ok(mentor.includes('Continue') === false);
+assert.ok(MentorUnavailableView().includes('Selected project context is unavailable'));
+console.log('Frontend Part 3 rendering/security checks passed.');
